@@ -12,20 +12,37 @@ public class PunainenPallo : PhysicsGame
     int painovoima = 900;
     int hyppyVoima = 500;
     int pyorimisNopeus = 6;
-     double pelaajaMaksiminopeus = 1000;
+    double pelaajaMaksiminopeus = 1000;
+    int elamiaAluksi = 5;
+
     bool voiHypata = false;
+
+    IntMeter elamat;
+
 
     Image pelaajaKuva = LoadImage("Pelaaja");
     Image kuutioKuva = LoadImage("Kuutio");
-
+    private Vector aloitusPaikka;
     PhysicsObject pelaaja;
 
     public override void Begin()
     {
         Gravity = new Vector(0, -painovoima);
+        LuoElamaLaskuri();
         LuoKentta();
         AsetaTormaysKasittelijat();
         AsetaOhjaimet();
+    }
+
+    private void LuoElamaLaskuri()
+    {
+        elamat = new IntMeter(elamiaAluksi);
+        Label elamaNaytto = new Label();
+        elamaNaytto.X = Screen.Left + 30;
+        elamaNaytto.Y = Screen.Top - 30;
+        elamaNaytto.TextColor = Color.Black;
+        elamaNaytto.BindTo(elamat);
+        Add(elamaNaytto);
     }
 
     void AsetaTormaysKasittelijat()
@@ -49,8 +66,14 @@ public class PunainenPallo : PhysicsGame
         }
         else
         {
-            pelaaja.Destroy();
+            PelaajaKuoli();
         }
+    }
+
+    void PelaajaKuoli()
+    {
+        elamat.AddValue(-1);
+        pelaaja.Position = aloitusPaikka;
     }
 
     void AsetaOhjaimet()
@@ -94,6 +117,7 @@ public class PunainenPallo : PhysicsGame
 
     void LuoPelaaja(Vector paikka, double leveys, double korkeus)
     {
+        aloitusPaikka = paikka;
         pelaaja = new PhysicsObject(leveys, korkeus, Shape.Circle);
         pelaaja.Position = paikka;
         pelaaja.Image = pelaajaKuva;
@@ -112,7 +136,7 @@ public class PunainenPallo : PhysicsGame
 
     void LuoKuutio(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject kuutio = new PhysicsObject(leveys, korkeus);
+        PhysicsObject kuutio = PhysicsObject.CreateStaticObject(leveys, korkeus);
         kuutio.Color = Color.DarkGray;
         kuutio.Position = paikka;
         kuutio.Tag = "kuutio";
