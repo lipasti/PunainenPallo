@@ -8,14 +8,18 @@ using Jypeli.Widgets;
 
 public class PunainenPallo : PhysicsGame
 {
-    int pelaajanNopeus = 200;
+    int pelaajanNopeus = 500;
     int painovoima = 900;
     int hyppyVoima = 500;
     int pyorimisNopeus = 6;
+     double pelaajaMaksiminopeus = 1000;
+    bool voiHypata = false;
+
     Image pelaajaKuva = LoadImage("Pelaaja");
     Image kuutioKuva = LoadImage("Kuutio");
 
-    PlatformCharacter pelaaja;
+    PhysicsObject pelaaja;
+
     public override void Begin()
     {
         Gravity = new Vector(0, -painovoima);
@@ -27,7 +31,14 @@ public class PunainenPallo : PhysicsGame
     void AsetaTormaysKasittelijat()
     {
         AddCollisionHandler(pelaaja, "kuutio", PelaajaTormaaKuutioon);
+        AddCollisionHandler(pelaaja, "maa", PelaajaOsuuMaahan);
+        AddCollisionHandler(pelaaja, "laatikko", PelaajaOsuuMaahan);
 
+    }
+
+    private void PelaajaOsuuMaahan(PhysicsObject pelaaja, PhysicsObject maa)
+    {
+        voiHypata = true;
     }
 
     private void PelaajaTormaaKuutioon(PhysicsObject pelaaja, PhysicsObject kuutio)
@@ -77,14 +88,16 @@ public class PunainenPallo : PhysicsGame
         PhysicsObject laatikko = new PhysicsObject(2*leveys, 2*korkeus);
         laatikko.Color = Color.Orange;
         laatikko.Position = paikka;
+        laatikko.Tag = "laatikko";
         Add(laatikko);
     }
 
     void LuoPelaaja(Vector paikka, double leveys, double korkeus)
     {
-        pelaaja = new PlatformCharacter(leveys, korkeus, Shape.Circle);
+        pelaaja = new PhysicsObject(leveys, korkeus, Shape.Circle);
         pelaaja.Position = paikka;
         pelaaja.Image = pelaajaKuva;
+        pelaaja.MaxVelocity = pelaajaMaksiminopeus;
         Add(pelaaja);
     }
 
@@ -109,12 +122,15 @@ public class PunainenPallo : PhysicsGame
 
     void LiikutaPelaajaa(int x)
     {
-        pelaaja.Walk(x * pelaajanNopeus);
-        pelaaja.Angle += Angle.FromDegrees(-x*pyorimisNopeus);
+        pelaaja.Push(new Vector(x * pelaajanNopeus, 0));
     }
 
     void HyppaytaPelaajaa()
     {
-        pelaaja.Jump(hyppyVoima);
+        if(voiHypata)
+        {
+            pelaaja.Hit(new Vector(0, hyppyVoima));
+            voiHypata = false;
+        }
     }
 }
