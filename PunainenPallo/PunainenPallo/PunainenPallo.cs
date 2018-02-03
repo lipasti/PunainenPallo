@@ -143,7 +143,7 @@ public class PunainenPallo : PhysicsGame
     void LuoPelaaja(Vector paikka, double leveys, double korkeus)
     {
         aloitusPaikka = paikka;
-        pelaaja = new PhysicsObject(leveys, korkeus, Shape.Circle);
+        pelaaja = new PhysicsObject(leveys*0.75, korkeus*0.75, Shape.Circle);
         pelaaja.Position = paikka;
         pelaaja.Image = pelaajaKuva;
         pelaaja.MaxVelocity = pelaajaMaksiminopeus;
