@@ -14,6 +14,7 @@ public class PunainenPallo : PhysicsGame
     int pyorimisNopeus = 6;
     double pelaajaMaksiminopeus = 1000;
     int elamiaAluksi = 5;
+    int kentta = 1;
 
     bool voiHypata = false;
 
@@ -22,6 +23,7 @@ public class PunainenPallo : PhysicsGame
 
     Image pelaajaKuva = LoadImage("Pelaaja");
     Image kuutioKuva = LoadImage("Kuutio");
+    Image maaliKuva = LoadImage("maali");
     private Vector aloitusPaikka;
     PhysicsObject pelaaja;
 
@@ -37,6 +39,8 @@ public class PunainenPallo : PhysicsGame
     private void LuoElamaLaskuri()
     {
         elamat = new IntMeter(elamiaAluksi);
+        elamat.MinValue = 0;
+        elamat.LowerLimit += GameOver;
         Label elamaNaytto = new Label();
         elamaNaytto.X = Screen.Left + 30;
         elamaNaytto.Y = Screen.Top - 30;
@@ -45,12 +49,32 @@ public class PunainenPallo : PhysicsGame
         Add(elamaNaytto);
     }
 
+    private void GameOver()
+    {
+        ClearAll();
+        kentta = 1;
+        MessageDisplay.Add("Pelaaja hävisi pelin");
+        Timer.SingleShot(5, Begin);
+    }
+
     void AsetaTormaysKasittelijat()
     {
         AddCollisionHandler(pelaaja, "kuutio", PelaajaTormaaKuutioon);
         AddCollisionHandler(pelaaja, "maa", PelaajaOsuuMaahan);
         AddCollisionHandler(pelaaja, "laatikko", PelaajaOsuuMaahan);
+        AddCollisionHandler(pelaaja, "maali", PelaajaOsuuMaaliin);
+    }
 
+    private void PelaajaOsuuMaaliin(PhysicsObject pelaaja, PhysicsObject maali)
+    {
+        SeuraavaanKenttaan();
+    }
+
+    private void SeuraavaanKenttaan()
+    {
+        kentta += 1;
+        ClearAll();
+        Begin();
     }
 
     private void PelaajaOsuuMaahan(PhysicsObject pelaaja, PhysicsObject maa)
@@ -92,13 +116,14 @@ public class PunainenPallo : PhysicsGame
     void LuoKentta()
     {
         //1. Luetaan kuva uuteen ColorTileMappiin, kuvan nimen perässä ei .png-päätettä.
-        ColorTileMap ruudut = ColorTileMap.FromLevelAsset("Level1");
+        ColorTileMap ruudut = ColorTileMap.FromLevelAsset("Level" + kentta);
 
         //2. Kerrotaan mitä aliohjelmaa kutsutaan, kun tietyn värinen pikseli tulee vastaan kuvatiedostossa.
         ruudut.SetTileMethod(Color.Red, LuoPelaaja);
         ruudut.SetTileMethod(Color.Black, LuoMaa);
         ruudut.SetTileMethod(Color.DarkGray, LuoKuutio);
         ruudut.SetTileMethod(Color.Orange, LuoLaatikko);
+        ruudut.SetTileMethod(Color.Blue, LuoMaali);
 
 
         //3. Execute luo kentän
@@ -136,12 +161,22 @@ public class PunainenPallo : PhysicsGame
 
     void LuoKuutio(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject kuutio = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        PhysicsObject kuutio = new PhysicsObject(leveys, korkeus);
         kuutio.Color = Color.DarkGray;
         kuutio.Position = paikka;
         kuutio.Tag = "kuutio";
         kuutio.Image = kuutioKuva;
         Add(kuutio);
+    }
+
+    void LuoMaali(Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        maali.Color = Color.Blue;
+        maali.Position = paikka;
+        maali.Tag = "maali";
+        maali.Image = maaliKuva;
+        Add(maali);
     }
 
     void LiikutaPelaajaa(int x)
