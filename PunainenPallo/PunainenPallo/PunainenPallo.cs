@@ -15,8 +15,10 @@ public class PunainenPallo : PhysicsGame
     double pelaajaMaksiminopeus = 1000;
     int elamiaAluksi = 5;
     int kentta = 1;
-
+    double pallonMassa = 1;
     bool voiHypata = false;
+    Timer hyppyVoimaLaskuri;
+    double hyppyVoimanKeraysAika = 0.5;
 
     IntMeter elamat;
 
@@ -107,7 +109,8 @@ public class PunainenPallo : PhysicsGame
         Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa vasemmalle", -1);
         Keyboard.Listen(Key.Left, ButtonState.Released, LiikutaPelaajaa, null, 0);
 
-        Keyboard.Listen(Key.Space, ButtonState.Pressed, HyppaytaPelaajaa, "Pelaaja hyppää");
+        Keyboard.Listen(Key.Space, ButtonState.Pressed, KeraaHyppyvoimaa, null);
+        Keyboard.Listen(Key.Space, ButtonState.Released, HyppaytaPelaajaa, "Pelaaja hyppää");
 
         PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
@@ -143,10 +146,11 @@ public class PunainenPallo : PhysicsGame
     void LuoPelaaja(Vector paikka, double leveys, double korkeus)
     {
         aloitusPaikka = paikka;
-        pelaaja = new PhysicsObject(leveys*0.75, korkeus*0.75, Shape.Circle);
+        pelaaja = new PhysicsObject(leveys*0.50, korkeus*0.50, Shape.Circle);
         pelaaja.Position = paikka;
         pelaaja.Image = pelaajaKuva;
         pelaaja.MaxVelocity = pelaajaMaksiminopeus;
+        pelaaja.Mass = pallonMassa;
         Add(pelaaja);
     }
 
@@ -184,12 +188,25 @@ public class PunainenPallo : PhysicsGame
         pelaaja.Push(new Vector(x * pelaajanNopeus, 0));
     }
 
+    void KeraaHyppyvoimaa()
+    {
+        hyppyVoimaLaskuri = new Timer();
+        hyppyVoimaLaskuri.Start();
+    }
+
     void HyppaytaPelaajaa()
     {
-        if(voiHypata)
+        double aikaaKulunut = hyppyVoimaLaskuri.SecondCounter.Value;
+        hyppyVoimaLaskuri.Stop();
+        if (voiHypata)
         {
-            pelaaja.Hit(new Vector(0, hyppyVoima));
+            pelaaja.Hit(new Vector(0, LaskeHyppyVoima(aikaaKulunut)));
             voiHypata = false;
         }
+    }
+
+    double LaskeHyppyVoima(double aikaaKulunut)
+    {
+        return Math.Max(0, hyppyVoima * (1 - (aikaaKulunut / hyppyVoimanKeraysAika)));
     }
 }
