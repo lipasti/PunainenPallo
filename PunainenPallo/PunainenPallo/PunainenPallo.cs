@@ -18,6 +18,7 @@ public class PunainenPallo : PhysicsGame
     bool voiHypata = false;
     Timer hyppyVoimaLaskuri;
     double hyppyVoimanKeraysAika = 0.5;
+    private Vector teleportKohde;
 
     IntMeter elamat;
 
@@ -67,6 +68,7 @@ public class PunainenPallo : PhysicsGame
         AddCollisionHandler(pelaaja, "laatikko", PelaajaOsuuMaahan);
         AddCollisionHandler(pelaaja, "maali", PelaajaOsuuMaaliin);
         AddCollisionHandler(pelaaja, "sydan", PelaajaOsuuSydameen);
+        AddCollisionHandler(pelaaja, "teleport", PelaajaOsuuTeleportiin);
     }
 
     private void PelaajaOsuuMaaliin(PhysicsObject pelaaja, PhysicsObject maali)
@@ -107,6 +109,11 @@ public class PunainenPallo : PhysicsGame
         sydan.Destroy();
     }
 
+    private void PelaajaOsuuTeleportiin(PhysicsObject pelaaja, PhysicsObject teleport)
+    {
+        pelaaja.Position = teleportKohde;
+    }
+
     void PelaajaKuoli()
     {
         elamat.AddValue(-1);
@@ -119,14 +126,17 @@ public class PunainenPallo : PhysicsGame
         Keyboard.Listen(Key.Right, ButtonState.Released, LiikutaPelaajaa, null, 0);
         Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa vasemmalle", -1);
         Keyboard.Listen(Key.Left, ButtonState.Released, LiikutaPelaajaa, null, 0);
-
+        Keyboard.Listen(Key.R, ButtonState.Pressed, AloitaKenttaAlusta, "Aloita kenttä alusta");
         Keyboard.Listen(Key.Space, ButtonState.Pressed, KeraaHyppyvoimaa, null);
         Keyboard.Listen(Key.Space, ButtonState.Released, HyppaytaPelaajaa, "Pelaaja hyppää");
 
         PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
     }
-    
+    void AloitaKenttaAlusta()
+    {
+        pelaaja.Position = aloitusPaikka;
+    }
     void LuoKentta()
     {
         //1. Luetaan kuva uuteen ColorTileMappiin, kuvan nimen perässä ei .png-päätettä.
@@ -139,11 +149,14 @@ public class PunainenPallo : PhysicsGame
         ruudut.SetTileMethod(Color.Orange, LuoLaatikko);
         ruudut.SetTileMethod(Color.Blue, LuoMaali);
         ruudut.SetTileMethod(Color.Pink, LuoSydan);
+        ruudut.SetTileMethod(Color.Green, LuoTeleport);
+        ruudut.SetTileMethod(Color.LightGreen, LuoTeleportKohde);
 
 
         //3. Execute luo kentän
         //   Parametreina leveys ja korkeus
         ruudut.Execute(50, 50);
+        Camera.Follow(pelaaja);
     }
 
     private void LuoLaatikko(Vector paikka, double leveys, double korkeus)
@@ -203,7 +216,18 @@ public class PunainenPallo : PhysicsGame
         sydan.Tag = "sydan";
         sydan.Image = sydanKuva;
         Add(sydan);
-
+    }
+    private void LuoTeleport(Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject teleport = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        teleport.Color = Color.Green;
+        teleport.Position = paikka;
+        teleport.Tag = "teleport";
+        Add(teleport);
+    }
+    private void LuoTeleportKohde(Vector paikka, double leveys, double korkeus)
+    {
+        teleportKohde = paikka;
     }
 
     void LiikutaPelaajaa(int x)
