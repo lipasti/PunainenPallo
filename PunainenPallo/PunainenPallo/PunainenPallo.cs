@@ -11,7 +11,6 @@ public class PunainenPallo : PhysicsGame
     int pelaajanNopeus = 500;
     int painovoima = 900;
     int hyppyVoima = 500;
-    int pyorimisNopeus = 6;
     double pelaajaMaksiminopeus = 1000;
     int elamiaAluksi = 5;
     int kentta = 1;
@@ -26,6 +25,8 @@ public class PunainenPallo : PhysicsGame
     Image pelaajaKuva = LoadImage("Pelaaja");
     Image kuutioKuva = LoadImage("Kuutio");
     Image maaliKuva = LoadImage("maali");
+    Image sydanKuva = LoadImage("sydan");
+
     private Vector aloitusPaikka;
     PhysicsObject pelaaja;
 
@@ -65,6 +66,7 @@ public class PunainenPallo : PhysicsGame
         AddCollisionHandler(pelaaja, "maa", PelaajaOsuuMaahan);
         AddCollisionHandler(pelaaja, "laatikko", PelaajaOsuuMaahan);
         AddCollisionHandler(pelaaja, "maali", PelaajaOsuuMaaliin);
+        AddCollisionHandler(pelaaja, "sydan", PelaajaOsuuSydameen);
     }
 
     private void PelaajaOsuuMaaliin(PhysicsObject pelaaja, PhysicsObject maali)
@@ -94,6 +96,15 @@ public class PunainenPallo : PhysicsGame
         {
             PelaajaKuoli();
         }
+    }
+
+    private void PelaajaOsuuSydameen(PhysicsObject pelaaja, PhysicsObject sydan)
+    {
+        if(elamat.Value < elamiaAluksi)
+        {
+            elamat.AddValue(1);
+        }
+        sydan.Destroy();
     }
 
     void PelaajaKuoli()
@@ -127,6 +138,7 @@ public class PunainenPallo : PhysicsGame
         ruudut.SetTileMethod(Color.DarkGray, LuoKuutio);
         ruudut.SetTileMethod(Color.Orange, LuoLaatikko);
         ruudut.SetTileMethod(Color.Blue, LuoMaali);
+        ruudut.SetTileMethod(Color.Pink, LuoSydan);
 
 
         //3. Execute luo kentän
@@ -181,6 +193,17 @@ public class PunainenPallo : PhysicsGame
         maali.Tag = "maali";
         maali.Image = maaliKuva;
         Add(maali);
+    }
+
+    void LuoSydan(Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject sydan = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        sydan.Color = Color.Pink;
+        sydan.Position = paikka;
+        sydan.Tag = "sydan";
+        sydan.Image = sydanKuva;
+        Add(sydan);
+
     }
 
     void LiikutaPelaajaa(int x)
