@@ -11,23 +11,25 @@ public class PunainenPallo : PhysicsGame
     int pelaajanNopeus = 500;
     int painovoima = 900;
     int hyppyVoima = 500;
-    double pelaajaMaksiminopeus = 1000;
+    double pelaajaMaksiminopeus = 2000;
     int elamiaAluksi = 5;
+    int boostejaAluksi = 0;
     int kentta = 1;
     double pallonMassa = 1;
     bool voiHypata = false;
     Timer hyppyVoimaLaskuri;
-    double hyppyVoimanKeraysAika = 0.5;
+    double hyppyVoimanKeraysAika = 2.0;
     private Vector teleportKohde;
 
     IntMeter elamat;
+    IntMeter boost;
 
 
     Image pelaajaKuva = LoadImage("Pelaaja");
     Image kuutioKuva = LoadImage("Kuutio");
     Image maaliKuva = LoadImage("maali");
     Image sydanKuva = LoadImage("sydan");
-
+    Image boostkuva = LoadImage("boost");
     private Vector aloitusPaikka;
     PhysicsObject pelaaja;
 
@@ -35,9 +37,11 @@ public class PunainenPallo : PhysicsGame
     {
         Gravity = new Vector(0, -painovoima);
         LuoElamaLaskuri();
+        LuoBoostLaskuri();
         LuoKentta();
         AsetaTormaysKasittelijat();
         AsetaOhjaimet();
+        
     }
 
     private void LuoElamaLaskuri()
@@ -51,6 +55,17 @@ public class PunainenPallo : PhysicsGame
         elamaNaytto.TextColor = Color.Black;
         elamaNaytto.BindTo(elamat);
         Add(elamaNaytto);
+    }
+    private void LuoBoostLaskuri()
+    {
+        boost = new IntMeter(boostejaAluksi);
+        boost.MinValue = 0;
+        Label boostNaytto = new Label();
+        boostNaytto.X = Screen.Left + 100;
+        boostNaytto.Y = Screen.Top - 30;
+        boostNaytto.TextColor = Color.Black;
+        boostNaytto.BindTo(boost);
+        Add(boostNaytto);
     }
 
     private void GameOver()
@@ -69,6 +84,8 @@ public class PunainenPallo : PhysicsGame
         AddCollisionHandler(pelaaja, "maali", PelaajaOsuuMaaliin);
         AddCollisionHandler(pelaaja, "sydan", PelaajaOsuuSydameen);
         AddCollisionHandler(pelaaja, "teleport", PelaajaOsuuTeleportiin);
+        AddCollisionHandler(pelaaja, "boost", PelaajaOsuuBoostiin);
+
     }
 
     private void PelaajaOsuuMaaliin(PhysicsObject pelaaja, PhysicsObject maali)
@@ -108,6 +125,13 @@ public class PunainenPallo : PhysicsGame
         }
         sydan.Destroy();
     }
+    private void PelaajaOsuuBoostiin(PhysicsObject pelaaja, PhysicsObject boosti)
+    {
+        boost.AddValue(1);
+        boostejaAluksi = boost.Value;
+
+        boosti.Destroy();
+    }
 
     private void PelaajaOsuuTeleportiin(PhysicsObject pelaaja, PhysicsObject teleport)
     {
@@ -122,13 +146,14 @@ public class PunainenPallo : PhysicsGame
 
     void AsetaOhjaimet()
     {
-        Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa oikealle", 1);
+        Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa oikealle", 2);
         Keyboard.Listen(Key.Right, ButtonState.Released, LiikutaPelaajaa, null, 0);
-        Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa vasemmalle", -1);
+        Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaPelaajaa, "Pelaajaa vasemmalle", -2);
         Keyboard.Listen(Key.Left, ButtonState.Released, LiikutaPelaajaa, null, 0);
         Keyboard.Listen(Key.R, ButtonState.Pressed, AloitaKenttaAlusta, "Aloita kenttä alusta");
         Keyboard.Listen(Key.Space, ButtonState.Pressed, KeraaHyppyvoimaa, null);
         Keyboard.Listen(Key.Space, ButtonState.Released, HyppaytaPelaajaa, "Pelaaja hyppää");
+        Keyboard.Listen(Key.B, ButtonState.Pressed, KaytaBoost, "PelaajaKäyttääBoostin");
 
         PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
@@ -151,6 +176,7 @@ public class PunainenPallo : PhysicsGame
         ruudut.SetTileMethod(Color.Pink, LuoSydan);
         ruudut.SetTileMethod(Color.Green, LuoTeleport);
         ruudut.SetTileMethod(Color.LightGreen, LuoTeleportKohde);
+        ruudut.SetTileMethod(Color.Gold, LuoBoost);
 
 
         //3. Execute luo kentän
@@ -163,7 +189,7 @@ public class PunainenPallo : PhysicsGame
     {
         PhysicsObject laatikko = new PhysicsObject(2*leveys, 2*korkeus);
         laatikko.Color = Color.Orange;
-        laatikko.Position = paikka;
+        laatikko.Position = paikka; 
         laatikko.Tag = "laatikko";
         Add(laatikko);
     }
@@ -225,6 +251,15 @@ public class PunainenPallo : PhysicsGame
         teleport.Tag = "teleport";
         Add(teleport);
     }
+    private void LuoBoost (Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject boost = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        boost.Color = Color.Green;
+        boost.Position = paikka;
+        boost.Tag = "boost";
+        boost.Image = boostkuva;
+        Add(boost);
+    }
     private void LuoTeleportKohde(Vector paikka, double leveys, double korkeus)
     {
         teleportKohde = paikka;
@@ -255,5 +290,13 @@ public class PunainenPallo : PhysicsGame
     double LaskeHyppyVoima(double aikaaKulunut)
     {
         return Math.Max(0, hyppyVoima * (1 - (aikaaKulunut / hyppyVoimanKeraysAika)));
+    }
+    void KaytaBoost()
+    {
+        if (boost.Value < 1) return;
+        
+       boost.AddValue(-1);
+        boostejaAluksi = boost.Value;
+       SeuraavaanKenttaan();
     }
 }
